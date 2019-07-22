@@ -54,10 +54,10 @@ set(HEADERS
 install(FILES ${HEADERS} DESTINATION include/muduo/net)
 
 add_subdirectory(http)
-add_subdirectory(inspect)
+#add_subdirectory(inspect)
 
 if(MUDUO_BUILD_EXAMPLES)
-  add_subdirectory(tests)
+  #add_subdirectory(tests)
 endif()
 
 if(PROTOBUF_FOUND)

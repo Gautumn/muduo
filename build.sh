@@ -16,6 +16,7 @@ mkdir -p $BUILD_DIR/$BUILD_TYPE-cpp11 \
            -DCMAKE_BUILD_TYPE=$BUILD_TYPE \
            -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR \
            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+           -DENABLE_BLOG=ON\
            $SOURCE_DIR \
   && make $*
 
