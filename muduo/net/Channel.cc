@@ -80,10 +80,17 @@ void Channel::handleEvent(Timestamp receiveTime)
   }
 }
 
+  /// TODO: Try to trigger the event.
 void Channel::handleEventWithGuard(Timestamp receiveTime)
 {
   eventHandling_ = true;
   LOG_TRACE << reventsToString();
+  /// man poll - POLLHUP
+  /// The device or socket has been disconnected.  
+  /// This flag is output only, and ignored if present in the input events bitmask.
+  /// Note that POLLHUP and POLLOUT are mutually exclusive and 
+  /// should never be present in the revents bitmask at the same time.
+  /// --- POLLHUP mean the other side call close() function. and that's why POLLHUP and POLLOUT are exclusive.
   if ((revents_ & POLLHUP) && !(revents_ & POLLIN))
   {
     if (logHup_)
@@ -93,6 +100,8 @@ void Channel::handleEventWithGuard(Timestamp receiveTime)
     if (closeCallback_) closeCallback_();
   }
 
+  /// The file descriptor is not open.
+  /// This flag is output only, and ignored if present in the input events bitmask.
   if (revents_ & POLLNVAL)
   {
     LOG_WARN << "fd = " << fd_ << " Channel::handle_event() POLLNVAL";
@@ -102,6 +111,10 @@ void Channel::handleEventWithGuard(Timestamp receiveTime)
   {
     if (errorCallback_) errorCallback_();
   }
+
+  /// POLLIN: Data other than high priority data may be read without blocking.
+  /// POLLPRI: High priority data may be read without blocking
+  /// POLLRDHUP: peer socket close write. read() == 0
   if (revents_ & (POLLIN | POLLPRI | POLLRDHUP))
   {
     if (readCallback_) readCallback_(receiveTime);

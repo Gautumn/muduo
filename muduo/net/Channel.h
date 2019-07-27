@@ -30,6 +30,7 @@ class EventLoop;
 /// This class doesn't own the file descriptor.
 /// The file descriptor could be a socket,
 /// an eventfd, a timerfd, or a signalfd
+/// --- this class only call event handlers. and belonging to one eventloop.
 class Channel : noncopyable
 {
  public:
@@ -91,9 +92,12 @@ class Channel : noncopyable
   static const int kWriteEvent;
 
   EventLoop* loop_;
+
+  /// from struct pollfd
   const int  fd_;
-  int        events_;
-  int        revents_; // it's the received event types of epoll or poll
+  int        events_;  // watching events, set by user
+  int        revents_; // active events(events returned). it's the received event types of epoll or poll
+
   int        index_; // used by Poller.
   bool       logHup_;
 
