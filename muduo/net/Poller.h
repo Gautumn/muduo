@@ -58,10 +58,13 @@ class Poller : noncopyable
   }
 
  protected:
+  /// make sure unique int(fd).
   typedef std::map<int, Channel*> ChannelMap;
+  /// store all care about channel
   ChannelMap channels_;
 
  private:
+  /// used to check if in loop thread(event loop)
   EventLoop* ownerLoop_;
 };
 

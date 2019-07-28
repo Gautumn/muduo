@@ -52,6 +52,7 @@ EPollPoller::~EPollPoller()
   ::close(epollfd_);
 }
 
+/// activeChannels store all the active channels and each channel with one/some event/s.
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels)
 {
   LOG_TRACE << "fd total count " << channels_.size();
@@ -65,6 +66,7 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList* activeChannels)
   {
     LOG_TRACE << numEvents << " events happened";
     fillActiveChannels(numEvents, activeChannels);
+    /// enlarge the event vector.
     if (implicit_cast<size_t>(numEvents) == events_.size())
     {
       events_.resize(events_.size()*2);
@@ -99,11 +101,15 @@ void EPollPoller::fillActiveChannels(int numEvents,
     assert(it != channels_.end());
     assert(it->second == channel);
 #endif
+    /// set events occured.
     channel->set_revents(events_[i].events);
     activeChannels->push_back(channel);
   }
 }
 
+/// channel index controled by Poller
+/// deleted channels shall be EPOLL_CTL_ADD => EPOLL_CTL_MOD
+/// none events watching in channel, EPOLL_CTL_DEL it.
 void EPollPoller::updateChannel(Channel* channel)
 {
   Poller::assertInLoopThread();
@@ -116,12 +122,15 @@ void EPollPoller::updateChannel(Channel* channel)
     int fd = channel->fd();
     if (index == kNew)
     {
+      /// not the same channel(does not stored before)
       assert(channels_.find(fd) == channels_.end());
       channels_[fd] = channel;
     }
     else // index == kDeleted
     {
+      /// delete fd exist
       assert(channels_.find(fd) != channels_.end());
+      /// channel match
       assert(channels_[fd] == channel);
     }
 
@@ -169,6 +178,8 @@ void EPollPoller::removeChannel(Channel* channel)
   channel->set_index(kNew);
 }
 
+/// event.data.ptr = channel keep the channel, make sure channel does not destroyed.
+/// benefit using epoll: epoll callback remember the data.ptr.
 void EPollPoller::update(int operation, Channel* channel)
 {
   struct epoll_event event;

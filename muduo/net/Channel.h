@@ -101,6 +101,7 @@ class Channel : noncopyable
   int        index_; // used by Poller.
   bool       logHup_;
 
+  /// tie to the channel owner(eg. TcpConnection)
   std::weak_ptr<void> tie_;
   bool tied_;
   bool eventHandling_;
