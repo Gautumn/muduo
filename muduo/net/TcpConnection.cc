@@ -348,12 +348,15 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 {
   loop_->assertInLoopThread();
   int savedErrno = 0;
+  /// 这里可能没有一次把所有收到的数据全部读取，因为epoll使用的是level trigger
+  /// 如果还有未读取的数据则会再次触发，这种方式的好处是TCP本身就是流式的，
+  /// 一次读取完所有的并没有特别大的意义。
   ssize_t n = inputBuffer_.readFd(channel_->fd(), &savedErrno);
   if (n > 0)
   {
     messageCallback_(shared_from_this(), &inputBuffer_, receiveTime);
   }
-  else if (n == 0)
+  else if (n == 0)  /// 读取到的数据为0，那么表示对方发送了FIN包，关闭了写操作。
   {
     handleClose();
   }
@@ -412,11 +415,14 @@ void TcpConnection::handleClose()
   assert(state_ == kConnected || state_ == kDisconnecting);
   // we don't close fd, leave it to dtor, so we can find leaks easily.
   setState(kDisconnected);
+  /// 将当前的channel从poll中删除，以后再也没有相关的事件触发。
   channel_->disableAll();
 
+  /// 引用+1
   TcpConnectionPtr guardThis(shared_from_this());
+  /// 即使断开了也要通知connection callback ?
   connectionCallback_(guardThis);
-  // must be the last line
+  // must be the last line, TcpServer注册进来的。
   closeCallback_(guardThis);
 }
 
